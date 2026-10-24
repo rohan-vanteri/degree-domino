@@ -1,0 +1,30 @@
+{
+  "today": "2026-10-24",
+  "school": "ASU",
+  "sample_student": true,
+  "dars": {
+    "source_url": "sample://dars",
+    "fetched_at": "2026-10-24",
+    "major": "Sample major (synthetic)",
+    "concentration": "Sample concentration",
+    "catalog_year": "2025",
+    "expected_graduation": "Spring 2029",
+    "credits_earned": 45,
+    "credits_in_progress": 15,
+    "credits_required": 120,
+    "completed_courses": ["AAA 101", "AAA 102", "BBB 110"],
+    "in_progress_courses": ["AAA 201", "BBB 210"],
+    "unmet_requirements": [
+      {"name": "Core sequence", "credits_needed": 3, "course_options": ["AAA 301"]},
+      {"name": "Upper-division elective", "credits_needed": 3, "course_options": ["AAA 310", "AAA 320"]},
+      {"name": "Math requirement", "credits_needed": 3, "course_options": ["BBB 220"]}
+    ]
+  },
+  "enrolled_courses": ["AAA 201", "BBB 210"],
+  "prerequisites": [
+    {"course": "AAA 301", "requires": ["AAA 201"], "requirement_text": "SAMPLE ONLY: AAA 201", "source_url": "sample://catalog", "fetched_at": "2026-10-24"},
+    {"course": "AAA 310", "requires": ["AAA 999"], "requirement_text": "SAMPLE ONLY: AAA 999", "source_url": "sample://catalog", "fetched_at": "2026-10-24"},
+    {"course": "AAA 320", "requires_any_of": ["AAA 102", "AAA 103"], "requirement_text": "SAMPLE ONLY: AAA 102 or AAA 103", "source_url": "sample://catalog", "fetched_at": "2026-10-24"}
+  ],
+  "target_credits": 15
+}

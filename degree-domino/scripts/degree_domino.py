@@ -5,6 +5,7 @@ Subcommands:
   drop   withdrawal preflight (deadline, enrolled credits, aid/scholarship and
          prerequisite tripwires, Stay / Withdraw / Alternate Future Fork)
   final  conditional final-exam-needed calculation
+  plan   degree progress and next-term suggestions from the DARS audit
 
 Standard library only. Never reads the machine clock: the student's local date
 comes from the input's "today" field. Never writes files.
@@ -24,6 +25,7 @@ SKILL_DIR = os.path.dirname(HERE)
 SAMPLES = {
     "drop": os.path.join(SKILL_DIR, "assets", "sample_drop.json"),
     "final": os.path.join(SKILL_DIR, "assets", "sample_final.json"),
+    "plan": os.path.join(SKILL_DIR, "assets", "sample_plan.json"),
 }
 
 CONFIRMED = "Confirmed"
@@ -452,6 +454,7 @@ def _live_prereqs(data, code, today):
             continue
         course = norm_course(p["course"])
         requires = {norm_course(r) for r in (p.get("requires") or [])}
+        requires |= {norm_course(r) for r in (p.get("requires_any_of") or [])}
         if target not in requires:
             continue
         # Major filter: keep only courses on the student's major map, plus the
@@ -538,6 +541,175 @@ def _deadline_result(d, today, status, note):
 
 # ----------------------------------------------------------------------- CLI
 
+# ---------------------------------------------------------------------- plan
+
+DEFAULT_COURSE_CREDITS = Decimal(3)
+MAX_REQUIREMENTS = 8
+MAX_OPTIONS = 3
+
+
+def _asu_url(url):
+    """True for an https URL on asu.edu or one of its subdomains (DARS, My ASU)."""
+    url = str(url or "")
+    if not url.startswith("https://"):
+        return False
+    host = url[len("https://"):].split("/", 1)[0].lower()
+    return host == "asu.edu" or host.endswith(".asu.edu")
+
+
+def _prereq_index(data, today):
+    """Map course -> list of fetched requirement records."""
+    index = {}
+    for p in data.get("prerequisites") or []:
+        if isinstance(p, dict) and p.get("course"):
+            index.setdefault(norm_course(p["course"]), []).append(p)
+    return index
+
+
+def _prereq_status(course, index, done, pending, today):
+    """Decide whether a course's fetched prerequisites are met.
+
+    Returns (state, missing, verified). state is one of: met, met_if_passing,
+    blocked, unchecked. `requires` means all of; `requires_any_of` one of.
+    """
+    records = index.get(course)
+    if not records:
+        return "unchecked", [], False
+    have_now = done
+    have_after = done | pending
+    missing = []
+    met_now = met_after = True
+    verified = True
+    for p in records:
+        all_of = {norm_course(c) for c in (p.get("requires") or [])}
+        any_of = {norm_course(c) for c in (p.get("requires_any_of") or [])}
+        quoted = "".join(str(p.get("requirement_text") or "").split()).upper()
+        named = all_of | any_of
+        verified = verified and _official_url(p.get("source_url")) and _fresh(p.get("fetched_at"), today) \
+            and all("".join(c.split()) in quoted for c in named)
+        if not all_of <= have_now or (any_of and not any_of & have_now):
+            met_now = False
+        lacking = sorted(all_of - have_after)
+        if any_of and not any_of & have_after:
+            lacking.append(" or ".join(sorted(any_of)))
+        if lacking:
+            met_after = False
+            missing.extend(lacking)
+    if met_now:
+        return "met", [], verified
+    if met_after:
+        return "met_if_passing", sorted((set().union(*[
+            {norm_course(c) for c in (p.get("requires") or []) + (p.get("requires_any_of") or [])}
+            for p in records]) & pending)), verified
+    return "blocked", missing, verified
+
+
+def compute_plan(data):
+    """Degree progress and next-term suggestions from the student's DARS audit.
+
+    Everything about the student comes from `dars` (read live from DARS) and
+    `enrolled_courses` (current classes). Suggestions are courses that fill an
+    unmet DARS requirement and whose fetched prerequisites are met; the script
+    never claims a section is offered or has seats.
+    """
+    today = parse_date(require(data, "today"), "today")
+    dars = require(data, "dars")
+    if not isinstance(dars, dict):
+        raise InputError("dars", "dars must be an object read from the DARS audit")
+
+    dars_ok = _asu_url(dars.get("source_url")) and _fresh(dars.get("fetched_at"), today)
+    source_status = CONFIRMED if dars_ok else check_with("your advisor")
+
+    done = {norm_course(c) for c in (dars.get("completed_courses") or [])}
+    pending = {norm_course(c) for c in (dars.get("in_progress_courses") or [])}
+    pending |= {norm_course(c) for c in (data.get("enrolled_courses") or [])}
+    pending -= done
+
+    out = {"ok": True, "today": today.isoformat(), "dars_status": source_status,
+           "major": {"name": dars.get("major"), "concentration": dars.get("concentration"),
+                     "catalog_year": dars.get("catalog_year")}}
+
+    # Progress, exactly as DARS reports it. No date is calculated or guessed.
+    progress = {"expected_graduation": dars.get("expected_graduation"),
+                "expected_graduation_source": "DARS audit" if dars.get("expected_graduation") else None}
+    if dars.get("credits_earned") is not None and dars.get("credits_required") is not None:
+        earned = to_decimal(dars["credits_earned"], "dars.credits_earned", 0)
+        needed = to_decimal(dars["credits_required"], "dars.credits_required", 0)
+        progress.update(credits_earned=num(earned), credits_required=num(needed),
+                        credits_remaining=num(max(needed - earned, Decimal(0))))
+    if dars.get("credits_in_progress") is not None:
+        progress["credits_in_progress"] = num(to_decimal(dars["credits_in_progress"],
+                                                         "dars.credits_in_progress", 0))
+    if not dars.get("expected_graduation"):
+        progress["expected_graduation_note"] = "DARS shows no expected graduation term."
+    out["progress"] = progress
+
+    credits_map = {norm_course(k): to_decimal(v, "course_credits", 0)
+                   for k, v in (data.get("course_credits") or {}).items()}
+    index = _prereq_index(data, today)
+
+    unmet = [r for r in (dars.get("unmet_requirements") or []) if isinstance(r, dict)]
+    out["requirements_left"] = len(unmet)
+    requirements = []
+    suggestions = []
+    seen = set()
+    for req in unmet[:MAX_REQUIREMENTS]:
+        options = []
+        for c in req.get("course_options") or []:
+            c = norm_course(c)
+            if c in done or c in pending:
+                continue
+            state, missing, verified = _prereq_status(c, index, done, pending, today)
+            options.append({"course": c, "prerequisites": state, "missing": missing,
+                            "status": CONFIRMED if state in ("met", "met_if_passing") and verified
+                            else check_with("your advisor")})
+        rank = {"met": 0, "met_if_passing": 1, "unchecked": 2, "blocked": 3}
+        options.sort(key=lambda o: rank[o["prerequisites"]])
+        requirements.append({"requirement": req.get("name"),
+                             "credits_needed": req.get("credits_needed"),
+                             "options": options[:MAX_OPTIONS]})
+        pick = next((o for o in options if o["prerequisites"] in ("met", "met_if_passing")
+                     and o["course"] not in seen), None)
+        if pick:
+            seen.add(pick["course"])
+            credits = credits_map.get(pick["course"])
+            suggestions.append({"course": pick["course"], "fills": req.get("name"),
+                                "credits": num(credits if credits is not None else DEFAULT_COURSE_CREDITS),
+                                "credits_assumed": credits is None,
+                                "condition": ("if you pass " + ", ".join(pick["missing"]))
+                                if pick["prerequisites"] == "met_if_passing" else None,
+                                "status": pick["status"]})
+    out["requirements"] = requirements
+
+    # Trim to the student's target load, if they gave one.
+    target = data.get("target_credits")
+    if target is not None:
+        limit = to_decimal(target, "target_credits", 0)
+        total = Decimal(0)
+        kept = []
+        for s in suggestions:
+            c = Decimal(str(s["credits"]))
+            if total + c <= limit:
+                kept.append(s)
+                total += c
+        suggestions = kept
+    out["suggested_next_term"] = suggestions
+    out["suggested_credits"] = num(sum((Decimal(str(s["credits"])) for s in suggestions), Decimal(0)))
+    out["registration_note"] = ("Check ASU Class Search for sections, times and seats before "
+                                "registering; suggestions don't confirm a class is offered.")
+    out["recommended_next_step"] = "Review these with your advisor before registering"
+
+    sources = {}
+    if dars_ok:
+        sources["dars"] = dars["source_url"]
+    for c, records in index.items():
+        for p in records:
+            if _official_url(p.get("source_url")):
+                sources["prereq.%s" % c.replace(" ", "")] = p["source_url"]
+    out["sources"] = sources
+    return out
+
+
 def emit(obj):
     text = json.dumps(obj, indent=2)
     if len(text) > MAX_OUTPUT_CHARS:
@@ -559,7 +731,7 @@ def read_input(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Degree Domino engine")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("drop", "final"):
+    for name in ("drop", "final", "plan"):
         p = sub.add_parser(name)
         p.add_argument("--input")
         p.add_argument("--sample", action="store_true")
@@ -577,6 +749,8 @@ def main(argv=None):
                       "fallback": "generic arithmetic only"})
                 return 3
             emit(compute_drop(data, pack))
+        elif args.command == "plan":
+            emit(compute_plan(data))
         else:
             fin = data.get("final", data) if isinstance(data, dict) else data
             result = compute_final(fin)

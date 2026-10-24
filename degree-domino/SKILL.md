@@ -1,6 +1,6 @@
 ---
 name: degree-domino
-description: Check what dropping or withdrawing from a class changes for credits, aid, prerequisites, deadlines and graduation, using the student's current classes and DARS audit. Use when a student says "should I drop", "what if I withdraw", "will this affect my scholarship", "what do I need on the final", "when will I graduate", "what is my expected graduation", "am I on track", or "how many credits do I have left". Builds a short, sourced Future Fork comparison; not a generic study plan.
+description: Answers ASU degree, major map, class registration, graduation and drop/withdraw questions from the student's DARS audit and current classes, with sourced suggestions. Use when a student asks "what should I take next semester", "what classes do I need", "help me register", "show my major map", "what is left in my degree", "when will I graduate", "what is my expected graduation", "am I on track", "how many credits do I have left", "should I drop", "what if I withdraw", "will this affect my scholarship", or "what do I need on the final". Not a generic study plan.
 ---
 
 # Degree Domino
@@ -24,20 +24,38 @@ dates. Never present a date from a form or document as the expected
 graduation. If DARS cannot be opened, say so and offer to try again after the
 student signs in; don't fall back to files.
 
-## Graduation and degree-progress questions
-For "when will I graduate", "am I on track" or "how many credits are left":
-1. Open the student's DARS audit and read: expected graduation term (if
-   shown), credits earned, credits required, requirements not yet met, and
-   courses in progress.
-2. Read current classes from Canvas or My ASU to see what is in progress.
-3. Reply in short plain text: the expected graduation term exactly as DARS
-   shows it (labeled "from your DARS audit"), credits earned of required, and
-   up to three unmet requirements. If DARS shows no expected term, say that,
-   and give the remaining credits instead; don't calculate or guess a date.
-   Label it Confirmed only when read from DARS today; otherwise
-   "Check with your advisor".
-4. If a current class is a requirement in DARS, note it, and offer a Drop
-   Check if the student is worried about that class.
+## Degree, major map, registration and graduation questions
+Use this for any question about the student's degree, major or
+concentration, major map, what to take or register for, requirements left,
+credits, or graduation. Drop/withdraw questions use the sections below.
+1. Open the student's DARS audit (see "Where student data comes from") and
+   read: major, concentration, catalog year, expected graduation term (only
+   if DARS shows one), credits earned, in progress and required, completed
+   courses, in-progress courses, and each unmet requirement with the course
+   options DARS lists for it.
+2. Read current classes from Canvas or the My ASU schedule.
+3. For the course options on unmet requirements, open each in the ASU catalog
+   (catalog.apps.asu.edu) and copy its "Enrollment requirements" word for
+   word, as in Gather step 5c. Use `requires` for courses that are all
+   needed and `requires_any_of` when any one is enough. If the student asks
+   about their major map, open it on degrees.asu.edu for their major,
+   concentration and catalog year and compare it with DARS.
+4. Write the data to a JSON file shaped like `assets/sample_plan.json`
+   (`dars`, `enrolled_courses`, `prerequisites`, `fetched_at` today, and
+   `target_credits` if the student gave a load) and run:
+   `python3 scripts/degree_domino.py plan --input <file>`
+5. Reply in short plain text:
+   - Progress: expected graduation exactly as DARS shows it, labeled "from
+     your DARS audit", and credits earned of required. If DARS shows no
+     term, say so and give remaining credits; never calculate a date.
+   - Up to five suggested courses from `suggested_next_term`, each with the
+     requirement it fills and any "if you pass ..." condition.
+   - Courses that are blocked, with the missing prerequisite.
+   - The registration note: check ASU Class Search for sections and seats,
+     and review with an advisor before registering.
+   Label items with the script's status. Never register the student.
+6. If a current class is a requirement in DARS and the student is worried
+   about it, offer a Drop Check.
 
 Gather everything below yourself first, then run the script, then reply once.
 Do not open with a judgment ("maybe", "I wouldn't withdraw") before the
@@ -88,6 +106,7 @@ JSON file shaped like `assets/sample_drop.json` or `assets/sample_final.json`,
 then run the deterministic script:
 - `python3 scripts/degree_domino.py drop --input <file> --rules rules/asu.json`
 - `python3 scripts/degree_domino.py final --input <file>`
+- `python3 scripts/degree_domino.py plan --input <file>` (degree and registration questions)
 
 For unsupported schools, omit `--rules` and use generic mode. Interpret only
 claims returned by the script; don't add unsourced policy verdicts.

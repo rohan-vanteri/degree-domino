@@ -26,6 +26,20 @@ Before changing enrollment, ask Financial Aid about your award
 and your advisor about MAT 266 timing. Reply "draft" for the questions.
 ```
 
+## Degree / registration plan
+```
+From your DARS audit: expected graduation Spring 2029.
+45 of 120 credits earned, 15 in progress. 3 requirements left.
+
+Next term options:
+1) AAA 301 (Core sequence), if you pass AAA 201
+2) AAA 320 (Upper-division elective)
+Blocked: AAA 310 needs AAA 999.
+
+Check ASU Class Search for sections and seats, and review with your
+advisor before registering.
+```
+
 ## Missing data
 Ask exactly one question, named by the script's `field` (exit code 2).
 - other_enrolled_credits: "How many credits are you enrolled in besides this class?"

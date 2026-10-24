@@ -1,6 +1,6 @@
 # Degree Domino
 
-*Text it before you drop it.* A Cubbie Skill that shows what withdrawing from a class changes (enrolled credits, the course's withdrawal deadline, scholarship and financial-aid rules, the next prerequisite) and compares Stay / Withdraw / Alternate plan in plain text.
+*Text it before you drop it.* A Cubbie Skill that answers degree, major map, registration and graduation questions from the student's DARS audit, and shows what withdrawing from a class changes (enrolled credits, the course's withdrawal deadline, scholarship and financial-aid rules, the next prerequisite) and compares Stay / Withdraw / Alternate plan in plain text.
 
 ## Install
 Text Cubbie the link to the Skill folder:
@@ -29,6 +29,7 @@ docs/            demo script, device checklist, roadmap, source review log
 cd degree-domino
 python3 scripts/degree_domino.py drop --sample --rules rules/asu.json
 python3 scripts/degree_domino.py final --sample
+python3 scripts/degree_domino.py plan --sample
 python3 -m unittest discover -s ../tests -p "test_*.py" -v
 ```
 Exit codes: 0 ok, 2 missing input, 3 rules unavailable, 4 unexpected error.
