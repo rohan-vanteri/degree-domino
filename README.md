@@ -1,0 +1,33 @@
+# Degree Domino
+
+*Text it before you drop it.* A Cubbie Skill that shows what withdrawing from a class changes (enrolled credits, the course's withdrawal deadline, scholarship and financial-aid rules, the next prerequisite) and compares Stay / Withdraw / Alternate plan in plain text.
+
+## Install
+Text Cubbie the link to the Skill folder:
+```
+https://github.com/rohan-vanteri/degree-domino/tree/main/degree-domino
+```
+
+## Scope and limits
+- **ASU Fall 2026 only** for deadlines and scholarship rules. Other schools get credit arithmetic and a checklist, not ASU rules.
+- Not an official degree audit, financial adviser or registration system. It never enrolls, withdraws, or sends anything without approval.
+- Every policy claim comes from `degree-domino/rules/asu.json`, with a source URL and check date. Unverified or stale rules are reported as "Check with [office]".
+- The final-exam calculation only gives a number when the grading method, cutoff and weights are known. A Canvas total alone is not enough.
+- Works without Canvas: the student can type in course credits and grades.
+- All data in this repository is synthetic.
+
+## Layout
+```
+degree-domino/   Skill folder installed by Cubbie (SKILL.md, scripts, rules, references, assets)
+tests/           unit tests (python3 -m unittest)
+docs/            demo script, device checklist, roadmap, source review log
+```
+
+## Run locally
+```
+cd degree-domino
+python3 scripts/degree_domino.py drop --sample --rules rules/asu.json
+python3 scripts/degree_domino.py final --sample
+python3 -m unittest discover -s ../tests -p "test_*.py" -v
+```
+Exit codes: 0 ok, 2 missing input, 3 rules unavailable, 4 unexpected error.

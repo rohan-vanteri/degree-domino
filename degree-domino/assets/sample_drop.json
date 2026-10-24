@@ -1,0 +1,29 @@
+{
+  "school": "ASU",
+  "term": "fall-2026",
+  "today": "2026-10-24",
+  "timezone": "America/Phoenix",
+  "sample_student": true,
+  "target_course": {
+    "code": "MAT 265", "credits": 3, "session": "C",
+    "session_provenance": "fictional_student_report",
+    "credits_provenance": "fictional_student_report",
+    "canvas_displayed_score": 58.0, "grade_provenance": "sample_canvas",
+    "repeat_status": "unknown"
+  },
+  "other_enrolled_credits": 12,
+  "other_credits_provenance": "fictional_student_report",
+  "scholarships": ["NAMU"],
+  "annual_earned_asu_credits_so_far": null,
+  "cumulative_asu_gpa": null,
+  "planned_next_course": "MAT 266",
+  "next_course_rule_verified": false,
+  "final": {
+    "grading_method": "weighted",
+    "final_weight": 0.4,
+    "target_percentage": 70,
+    "nonfinal_aggregate": null,
+    "all_other_work_finalized": false,
+    "remaining_nonfinal_weight": null
+  }
+}

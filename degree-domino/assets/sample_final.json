@@ -1,0 +1,13 @@
+{
+  "today": "2026-10-24",
+  "sample_student": true,
+  "final": {
+    "grading_method": "weighted",
+    "final_weight": 0.4,
+    "target_percentage": 70,
+    "nonfinal_aggregate": 58,
+    "nonfinal_provenance": "fictional_student_report",
+    "all_other_work_finalized": true,
+    "remaining_nonfinal_weight": 0
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "school": "ASU",
+  "pack_version": "2026-10-24",
+  "rules": [
+    {
+      "id": "asu.deadline.withdraw.fa26A",
+      "school": "ASU",
+      "applies_to": {"term": "fall-2026", "session": "A", "course_type": "standard"},
+      "rule": {"type": "course_withdrawal_deadline", "date": "2026-09-09"},
+      "status": "confirmed",
+      "source_url": "https://registrar.asu.edu/academic-calendar",
+      "source_note": "Fall 2026 Session A course withdrawal deadline",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.deadline.withdraw.fa26B",
+      "school": "ASU",
+      "applies_to": {"term": "fall-2026", "session": "B", "course_type": "standard"},
+      "rule": {"type": "course_withdrawal_deadline", "date": "2026-11-03"},
+      "status": "confirmed",
+      "source_url": "https://registrar.asu.edu/academic-calendar",
+      "source_note": "Fall 2026 Session B course withdrawal deadline",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.deadline.withdraw.fa26C",
+      "school": "ASU",
+      "applies_to": {"term": "fall-2026", "session": "C", "course_type": "standard"},
+      "rule": {"type": "course_withdrawal_deadline", "date": "2026-11-04"},
+      "status": "confirmed",
+      "source_url": "https://registrar.asu.edu/academic-calendar",
+      "source_note": "Fall 2026 Session C course withdrawal deadline",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.deadline.nonstandard",
+      "school": "ASU",
+      "applies_to": {"term": "fall-2026", "course_type": "nonstandard"},
+      "rule": {"type": "course_withdrawal_deadline_individual", "instruction": "Use the class's Dates/calendar icon in My ASU; deadlines are prorated."},
+      "status": "confirmed",
+      "source_url": "https://registrar.asu.edu/academic-calendar",
+      "source_note": "Non-A/B/C sessions have prorated individual deadlines",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.deadline.complete_withdraw.fa26C",
+      "school": "ASU",
+      "applies_to": {"term": "fall-2026", "session": "C"},
+      "rule": {"type": "complete_session_withdrawal_deadline", "date": "2026-12-04"},
+      "status": "confirmed",
+      "source_url": "https://registrar.asu.edu/academic-calendar",
+      "source_note": "Complete-session withdrawal, not single-course withdrawal",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.grade.W",
+      "school": "ASU",
+      "applies_to": {},
+      "rule": {"type": "withdrawal_grade", "grade": "W", "earns_credit": false, "gpa_impact": false},
+      "status": "confirmed",
+      "source_url": "https://registrar.asu.edu/drop-add",
+      "source_note": "Withdrawal after drop deadline gives W: no credit, no GPA impact. Also https://registrar.asu.edu/grades",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.namu.term_enrollment",
+      "school": "ASU",
+      "applies_to": {"scholarship": "NAMU"},
+      "rule": {"type": "term_enrollment_minimum", "credits": 12},
+      "status": "confirmed",
+      "source_url": "https://tuition.asu.edu/scholarship-renewal-guide",
+      "source_note": "Merit award disburses only at 12+ ASU enrolled credits in fall/spring, subject to approved exceptions",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.namu.annual_earned",
+      "school": "ASU",
+      "applies_to": {"scholarship": "NAMU"},
+      "rule": {"type": "annual_renewal", "earned_credits": 30, "cumulative_gpa": 3.0},
+      "status": "confirmed",
+      "source_url": "https://tuition.asu.edu/scholarship-maintenance-plan",
+      "source_note": "Full renewal ordinarily needs 30 earned ASU credits per academic year and 3.00 ASU cumulative GPA",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.namu.credit_exclusions",
+      "school": "ASU",
+      "applies_to": {"scholarship": "NAMU"},
+      "rule": {"type": "renewal_credit_exclusions", "excluded": ["repeat", "AP", "transfer", "consortium", "incomplete", "audit"]},
+      "status": "confirmed",
+      "source_url": "https://tuition.asu.edu/scholarship-renewal-guide",
+      "source_note": "Some credits do not count toward renewal",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.namu.exceptions",
+      "school": "ASU",
+      "applies_to": {"scholarship": "NAMU"},
+      "rule": {"type": "enrollment_exceptions", "examples": ["final-term graduate with approved graduation application", "some approved SAILS students"]},
+      "status": "confirmed",
+      "source_url": "https://tuition.asu.edu/scholarship-renewal-guide",
+      "source_note": "Some students may be eligible below 12 credits",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.namu.no_summer_disbursement",
+      "school": "ASU",
+      "applies_to": {"scholarship": "NAMU"},
+      "rule": {"type": "summer", "disbursement": false, "summer_credits_may_count": true},
+      "status": "confirmed",
+      "source_url": "https://tuition.asu.edu/scholarship-renewal-guide",
+      "source_note": "No summer disbursement; qualifying summer hours may count toward annual credits",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.sap.W",
+      "school": "ASU",
+      "applies_to": {},
+      "rule": {"type": "sap_pace", "w_counts_attempted": true, "w_counts_completed": false, "min_pace": 0.6667},
+      "status": "confirmed",
+      "source_url": "https://tuition.asu.edu/satisfactory-academic-progress",
+      "source_note": "W counts as attempted, not completed, in SAP pace; needs full history to calculate",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.aid.post_disbursement",
+      "school": "ASU",
+      "applies_to": {},
+      "rule": {"type": "aid_recalculation", "possible": true},
+      "status": "confirmed",
+      "source_url": "https://tuition.asu.edu/policies/census",
+      "source_note": "Dropping/withdrawing after disbursement may lead to aid recalculation. Also https://tuition.asu.edu/policies/fa-withdrawal",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.gradingscheme.variable",
+      "school": "ASU",
+      "applies_to": {},
+      "rule": {"type": "grading_scheme_variable"},
+      "status": "confirmed",
+      "source_url": "https://tlc.sols.asu.edu/teaching/toolkits/preparing-and-finalizing-grades-canvas",
+      "source_note": "Canvas displayed total may exclude ungraded work",
+      "checked_at": "2026-10-24"
+    },
+    {
+      "id": "asu.prereq.MAT265_MAT266",
+      "school": "ASU",
+      "applies_to": {"course": "MAT 266", "requires": "MAT 265"},
+      "rule": {"type": "prerequisite", "course": "MAT 266", "requires": ["MAT 265", "MAT 270"], "min_grade": "C"},
+      "status": "verify",
+      "source_url": "https://catalog.apps.asu.edu/",
+      "source_note": "VERIFY: 2022 departmental guide only; confirm current catalog year before claiming",
+      "checked_at": "2026-10-24"
+    }
+  ]
+}
