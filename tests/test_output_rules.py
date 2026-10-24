@@ -13,7 +13,7 @@ class OutputRules(unittest.TestCase):
     def outputs(self):
         variants = [drop_input(), drop_input(other_enrolled_credits=8),
                     drop_input(target_course={"session": "A"}),
-                    drop_input(next_course_rule_verified=True)]
+                    drop_input(planned_next_course="MAT 343")]
         return [dd.compute_drop(v, pack()) for v in variants]
 
     def test_no_banned_phrases(self):

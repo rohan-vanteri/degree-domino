@@ -14,9 +14,8 @@ class RulePack(unittest.TestCase):
             self.assertIn(r["status"], ("confirmed", "verify"))
             self.assertTrue(r["source_url"].startswith("https://"))
 
-    def test_verify_rule_is_not_usable(self):
-        p = pack()
-        self.assertIsNone(dd.usable_rule(p, "asu.prereq.MAT265_MAT266", dd.date(2026, 10, 24)))
+    def test_no_course_rules_are_hard_coded(self):
+        self.assertFalse(any(rid.startswith("asu.prereq.") for rid in pack()["rules"]))
 
     def test_stale_rule_degrades(self):
         out = dd.compute_drop(drop_input(today="2026-12-31", term="fall-2026"), pack())

@@ -36,6 +36,11 @@ VERIFIED_PROVENANCE = {"my_asu", "official_class_search", "official_catalog", "v
 
 STANDARD_SESSIONS = {"A", "B", "C"}
 
+# Course data is read live by Cubbie each run; only these hosts count as official.
+OFFICIAL_HOSTS = {"catalog.apps.asu.edu", "degrees.asu.edu", "degrees.apps.asu.edu",
+                  "catalog.asu.edu"}
+LIVE_STALE_DAYS = 7
+
 
 def check_with(office):
     return "Check with " + office
@@ -121,12 +126,6 @@ def usable_rule(pack, rule_id, today):
         return None
     return rule
 
-
-def any_rule(pack, rule_id):
-    """Return a rule regardless of status (used to cite a source link only)."""
-    if not pack:
-        return None
-    return pack["rules"].get(rule_id)
 
 
 # -------------------------------------------------------------- final needed
@@ -330,24 +329,13 @@ def compute_drop(data, pack):
         headlines.append({"text": "Your scholarship's credit rules aren't in my verified pack.",
                           "status": check_with("Financial Aid")})
 
-    # Prerequisite tripwire: conditional unless the rule and plan are verified.
-    nxt = data.get("planned_next_course")
-    prereq = None
-    if nxt:
-        rid = "asu.prereq.%s_%s" % (code.replace(" ", ""), str(nxt).replace(" ", ""))
-        prereq = usable_rule(pack, rid, today) if asu else None
-        if prereq and data.get("next_course_rule_verified") is True:
-            cite(prereq)
-            headlines.append({"text": "%s requires %s (minimum %s). A W earns no credit for it."
-                              % (nxt, code, prereq["rule"].get("min_grade", "grade per catalog")),
-                              "status": CONFIRMED})
-        else:
-            cited = any_rule(pack, rid) if asu else None
-            if cited:
-                cite(cited)
-            headlines.append({"text": "%s may require %s; withdrawing could block that plan. "
-                                      "Prerequisite not yet verified in the current catalog." % (nxt, code),
-                              "status": check_with("your advisor")})
+    # Prerequisite tripwire, from requirements Cubbie read live this run and
+    # filtered to the student's major. Nothing course-specific is hard-coded.
+    live = _live_prereqs(data, code, today)
+    out["major"] = live["major"]
+    out["dominoes_in_major"] = live["dominoes"]
+    if live["headline"]:
+        headlines.append(live["headline"])
 
     out["headlines"] = headlines[:3]
 
@@ -386,9 +374,105 @@ def compute_drop(data, pack):
         out["final_needed"] = None
 
     out["source_ids"] = sources
-    if pack:
-        out["sources"] = {sid: pack["rules"][sid]["source_url"] for sid in sources}
+    out["sources"] = {sid: pack["rules"][sid]["source_url"] for sid in sources} if pack else {}
+    out["sources"].update(live["sources"])
     return out
+
+
+def norm_course(code):
+    """'mat265', 'MAT 265' and 'MAT  265' all become 'MAT 265'."""
+    text = "".join(str(code).split()).upper()
+    i = 0
+    while i < len(text) and text[i].isalpha():
+        i += 1
+    return (text[:i] + " " + text[i:]).strip()
+
+
+def _official_url(url):
+    """True for an https URL on an official ASU catalog or degree host."""
+    url = str(url or "")
+    if not url.startswith("https://"):
+        return False
+    host = url[len("https://"):].split("/", 1)[0].lower()
+    return host in OFFICIAL_HOSTS
+
+
+def _fresh(stamp, today):
+    try:
+        d = date.fromisoformat(str(stamp)[:10])
+    except ValueError:
+        return False
+    return d <= today and (today - d).days <= LIVE_STALE_DAYS
+
+
+def _live_prereqs(data, code, today):
+    """Build prerequisite dominoes from data Cubbie fetched during this run.
+
+    `major`: {"name", "catalog_year", "source_url", "fetched_at", "courses": [...]}
+        read from the student's ASU major map. Courses outside it are ignored.
+    `prerequisites`: [{"course", "requires": [...], "requirement_text",
+        "source_url", "fetched_at"}] read from the ASU catalog.
+
+    A requirement is Confirmed only when it comes from an official ASU page,
+    was fetched within LIVE_STALE_DAYS, and its quoted text names the course
+    being dropped. Anything else is "Check with your advisor".
+    """
+    target = norm_course(code)
+    result = {"major": None, "dominoes": [], "headline": None, "sources": {}}
+
+    major = data.get("major")
+    major_courses = None
+    if isinstance(major, dict) and major.get("courses"):
+        major_ok = _official_url(major.get("source_url")) and _fresh(major.get("fetched_at"), today)
+        major_courses = {norm_course(c) for c in major["courses"]}
+        result["major"] = {"name": major.get("name"), "catalog_year": major.get("catalog_year"),
+                           "course_count": len(major_courses), "verified": major_ok}
+        if major_ok:
+            result["sources"]["major_map"] = major["source_url"]
+
+    planned = data.get("planned_next_course")
+    planned = norm_course(planned) if planned else None
+
+    for i, p in enumerate(data.get("prerequisites") or []):
+        if not isinstance(p, dict) or not p.get("course"):
+            continue
+        course = norm_course(p["course"])
+        requires = {norm_course(r) for r in (p.get("requires") or [])}
+        if target not in requires:
+            continue
+        # Major filter: keep only courses on the student's major map, plus the
+        # course the student says they plan to take next.
+        if major_courses is not None and course not in major_courses and course != planned:
+            continue
+        quoted = "".join(str(p.get("requirement_text") or "").split()).upper()
+        verified = (_official_url(p.get("source_url")) and _fresh(p.get("fetched_at"), today)
+                    and "".join(target.split()) in quoted)
+        entry = {"course": course, "requires": sorted(requires),
+                 "requirement_text": p.get("requirement_text"),
+                 "in_major": major_courses is not None and course in major_courses,
+                 "status": CONFIRMED if verified else check_with("your advisor")}
+        result["dominoes"].append(entry)
+        if verified:
+            result["sources"]["prereq.%s" % course.replace(" ", "")] = p["source_url"]
+
+    dominoes = result["dominoes"]
+    planned_hit = [d for d in dominoes if d["course"] == planned]
+    lead = planned_hit[0] if planned_hit else (dominoes[0] if dominoes else None)
+
+    if lead:
+        others = [d["course"] for d in dominoes if d is not lead]
+        verb = "requires" if lead["status"] == CONFIRMED else "may require"
+        text = "%s %s %s; a W earns no credit toward it." % (lead["course"], verb, target)
+        if lead["status"] == CONFIRMED and lead["requirement_text"]:
+            text += ' Catalog: "%s"' % str(lead["requirement_text"])[:160]
+        if others:
+            text += " Also in your major: %s." % ", ".join(others[:4])
+        result["headline"] = {"text": text, "status": lead["status"]}
+    elif planned:
+        result["headline"] = {"text": "%s may depend on %s; I couldn't confirm it in the ASU catalog."
+                                      % (planned, target),
+                              "status": check_with("your advisor")}
+    return result
 
 
 def _deadline(data, course, pack, asu, today, cite):

@@ -39,8 +39,8 @@ class DropCheck(unittest.TestCase):
         self.assertIn("advisor", pre["status"])
         self.assertIn("may", pre["text"])
 
-    def test_verify_prereq_never_confirmed_even_if_plan_verified(self):
-        out = dd.compute_drop(drop_input(next_course_rule_verified=True), pack())
+    def test_sample_prereq_never_confirmed(self):
+        out = dd.compute_drop(drop_input(), pack())
         pre = [h for h in out["headlines"] if "MAT 266" in h["text"]][0]
         self.assertNotEqual(pre["status"], "Confirmed")
 

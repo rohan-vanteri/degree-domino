@@ -5,19 +5,23 @@
   "timezone": "America/Phoenix",
   "sample_student": true,
   "target_course": {
-    "code": "MAT 265", "credits": 3, "session": "C",
+    "code": "MAT 265",
+    "credits": 3,
+    "session": "C",
     "session_provenance": "fictional_student_report",
     "credits_provenance": "fictional_student_report",
-    "canvas_displayed_score": 58.0, "grade_provenance": "sample_canvas",
+    "canvas_displayed_score": 58.0,
+    "grade_provenance": "sample_canvas",
     "repeat_status": "unknown"
   },
   "other_enrolled_credits": 12,
   "other_credits_provenance": "fictional_student_report",
-  "scholarships": ["NAMU"],
+  "scholarships": [
+    "NAMU"
+  ],
   "annual_earned_asu_credits_so_far": null,
   "cumulative_asu_gpa": null,
   "planned_next_course": "MAT 266",
-  "next_course_rule_verified": false,
   "final": {
     "grading_method": "weighted",
     "final_weight": 0.4,
@@ -25,5 +29,27 @@
     "nonfinal_aggregate": null,
     "all_other_work_finalized": false,
     "remaining_nonfinal_weight": null
-  }
+  },
+  "major": {
+    "name": "Sample major (synthetic)",
+    "catalog_year": "2026",
+    "source_url": "sample://major-map",
+    "fetched_at": "2026-10-24",
+    "courses": [
+      "MAT 265",
+      "MAT 266",
+      "MAT 343"
+    ]
+  },
+  "prerequisites": [
+    {
+      "course": "MAT 266",
+      "requires": [
+        "MAT 265"
+      ],
+      "requirement_text": "SAMPLE ONLY: not read from the ASU catalog",
+      "source_url": "sample://catalog/MAT266",
+      "fetched_at": "2026-10-24"
+    }
+  ]
 }

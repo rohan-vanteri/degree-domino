@@ -17,8 +17,22 @@ impacts, and state uncertainty rather than guessing.
 3. Establish school, exact course section/session, and individual withdrawal
    deadline; check the course's Dates icon in My ASU if necessary. Never apply
    Session C's deadline to Session B, A or non-standard courses.
-4. Identify the next course the student plans to take and verify its
-   prerequisite from an official current catalog before claiming it is blocked.
+4. Look up course requirements live, every run; never rely on a stored list.
+   a. Get the student's major and catalog year (from memory, or ask once and
+      remember it with consent).
+   b. Search the web for that major's ASU major map on degrees.asu.edu, open
+      it, and list every course code on it. Pass them as `major.courses` with
+      the page URL as `major.source_url`.
+   c. In the ASU course catalog (catalog.apps.asu.edu), open the dropped
+      course and the courses on the major map that might need it (the
+      student's planned next course first). Copy each course's
+      "Enrollment requirements" text word for word into `requirement_text`
+      and list the course codes it names in `requires`. If the catalog asks
+      for an ASU login, open it in the browser and let the student sign in;
+      never ask for their password.
+   d. Record `fetched_at` as today's date for everything you read. If a page
+      will not load, leave it out; the script then says "Check with your
+      advisor" instead of guessing.
 5. Ask scholarship type only if relevant. Treat semester enrolled hours,
    annual earned hours, cumulative GPA, and SAP as different calculations.
 6. For final-needed: confirm weighted vs points-based grading, published grade
@@ -34,6 +48,9 @@ then run the deterministic script:
 
 For unsupported schools, omit `--rules` and use generic mode. Interpret only
 claims returned by the script; don't add unsourced policy verdicts.
+`rules/asu.json` holds only university-wide policies (deadlines, W grade,
+scholarship, aid). The script keeps only prerequisites for courses on the
+student's major map and reports them in `dominoes_in_major`.
 
 Exit codes: 0 summarize the result; 2 ask for the named missing field (one
 question); 3 rules unavailable, give generic arithmetic and say so; 4 give no

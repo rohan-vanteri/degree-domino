@@ -13,4 +13,3 @@ The P3 owner fills this in. A rule may stay `confirmed` in `rules/asu.json` only
 | asu.namu.annual_earned | https://tuition.asu.edu/scholarship-maintenance-plan | | | |
 | asu.sap.W | https://tuition.asu.edu/satisfactory-academic-progress | | | |
 | asu.aid.post_disbursement | https://tuition.asu.edu/policies/census | | | |
-| asu.prereq.MAT265_MAT266 | https://catalog.apps.asu.edu/ | (still VERIFY) | | |
