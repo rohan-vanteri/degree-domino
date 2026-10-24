@@ -1,6 +1,6 @@
 ---
 name: degree-domino
-description: Check what dropping or withdrawing from a class changes for credits, scholarship/financial aid, course prerequisites and deadlines before deciding. Use when a student says "should I drop", "what if I withdraw", "will this affect my scholarship", "what do I need on the final", or "thinking about withdrawing". Builds a short, sourced Future Fork comparison; not a generic study plan.
+description: Check what dropping or withdrawing from a class changes for credits, aid, prerequisites, deadlines and graduation, using the student's current classes and DARS audit. Use when a student says "should I drop", "what if I withdraw", "will this affect my scholarship", "what do I need on the final", "when will I graduate", "what is my expected graduation", "am I on track", or "how many credits do I have left". Builds a short, sourced Future Fork comparison; not a generic study plan.
 ---
 
 # Degree Domino
@@ -8,6 +8,36 @@ description: Check what dropping or withdrawing from a class changes for credits
 Help students understand the consequences of academic decisions; never make
 an enrollment decision for them. Separate official rules from student-specific
 impacts, and state uncertainty rather than guessing.
+
+## Where student data comes from
+Use only these sources for the student's own academic record:
+- Current classes and grades: the student's Canvas, or their My ASU class
+  schedule.
+- Degree progress, major, concentration, catalog year, credits earned and
+  remaining, requirements left, and expected graduation term: the student's
+  DARS degree audit, opened in the browser from My ASU (the student signs in;
+  never ask for their password).
+
+Never search or read Google Drive, Docs, email, uploaded files or other
+documents for the student's academic record, even if they mention graduation
+dates. Never present a date from a form or document as the expected
+graduation. If DARS cannot be opened, say so and offer to try again after the
+student signs in; don't fall back to files.
+
+## Graduation and degree-progress questions
+For "when will I graduate", "am I on track" or "how many credits are left":
+1. Open the student's DARS audit and read: expected graduation term (if
+   shown), credits earned, credits required, requirements not yet met, and
+   courses in progress.
+2. Read current classes from Canvas or My ASU to see what is in progress.
+3. Reply in short plain text: the expected graduation term exactly as DARS
+   shows it (labeled "from your DARS audit"), credits earned of required, and
+   up to three unmet requirements. If DARS shows no expected term, say that,
+   and give the remaining credits instead; don't calculate or guess a date.
+   Label it Confirmed only when read from DARS today; otherwise
+   "Check with your advisor".
+4. If a current class is a requirement in DARS, note it, and offer a Drop
+   Check if the student is worried about that class.
 
 Gather everything below yourself first, then run the script, then reply once.
 Do not open with a judgment ("maybe", "I wouldn't withdraw") before the
@@ -20,11 +50,9 @@ script has run, and never lean toward staying or withdrawing.
    `enrolled_courses_source`. If the named course is not among them, the
    script returns `enrolled: false`: tell the student they aren't currently
    enrolled in that class and show the courses they are in. Stop there.
-2. Find the student's major, concentration and catalog year yourself, in
-   this order: memory; the student's My ASU profile or DARS degree audit,
-   opened in the browser (the student signs in; never ask for a password);
-   then their Canvas profile. Ask only if none of these shows it, and ask
-   once. With consent, remember it so it is never asked again.
+2. Read the student's major, concentration and catalog year from their DARS
+   degree audit yourself (see "Where student data comes from"). Ask only if
+   DARS cannot be opened, and ask once.
 3. If Canvas is unavailable, say so in one line and continue in manual mode.
    Ask for just the next missing fact, starting with course credits and total
    enrolled hours.
