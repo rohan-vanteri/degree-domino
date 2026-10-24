@@ -1,0 +1,30 @@
+{
+  "school": "ASU",
+  "term": "fall-2026",
+  "today": "2026-10-24",
+  "timezone": "America/Phoenix",
+  "sample_student": true,
+  "target_course": {"code": "CSE 240"},
+  "enrolled_courses_source": "canvas",
+  "enrolled_courses": [
+    {"code": "CSE 240", "credits": 3, "start": "2026-08-20", "end": "2026-12-05", "current_score": 58},
+    {"code": "CSE 230", "credits": 3, "start": "2026-08-20", "end": "2026-12-05"},
+    {"code": "MAT 265", "credits": 3, "start": "2026-08-20", "end": "2026-12-05"},
+    {"code": "ENG 102", "credits": 3, "start": "2026-08-20", "end": "2026-12-05"},
+    {"code": "HST 100", "credits": 3, "start": "2026-08-20", "end": "2026-12-05"}
+  ],
+  "scholarships": ["NAMU"],
+  "planned_next_course": "CSE 360",
+  "prerequisites": [
+    {"course": "CSE 360", "requires": ["CSE 240"], "requirement_text": "SAMPLE ONLY: CSE 240", "source_url": "sample://catalog", "fetched_at": "2026-10-24"},
+    {"course": "CSE 340", "requires": ["CSE 240"], "requirement_text": "SAMPLE ONLY: CSE 240", "source_url": "sample://catalog", "fetched_at": "2026-10-24"}
+  ],
+  "final": {
+    "target_percentage": 70,
+    "canvas_groups": [
+      {"name": "Homework", "weight": 30, "score": 58, "complete": true},
+      {"name": "Midterms", "weight": 30, "score": 58, "complete": true},
+      {"name": "Final Exam", "weight": 40, "is_final": true}
+    ]
+  }
+}

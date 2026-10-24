@@ -35,7 +35,7 @@ class OutputRules(unittest.TestCase):
     def test_output_is_compact(self):
         for out in self.outputs():
             self.assertLess(len(json.dumps(out, indent=2)), 8000)
-            self.assertLess(len(json.dumps(out)), 2500)
+            self.assertLess(len(json.dumps(out)), 3000)  # plan: hard limit 8000
 
     def test_cli_exit_codes(self):
         with tempfile.TemporaryDirectory() as tmp:

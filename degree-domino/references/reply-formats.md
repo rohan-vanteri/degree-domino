@@ -2,20 +2,37 @@
 
 Plain text, no Markdown. Links on their own line. At most 3 consequences per message; split long replies into several short messages.
 
-## Drop Check
+## Drop Check (no questions; all from Canvas)
 ```
-Your MAT 265 section is Session C (from your My ASU dates).
-Course withdrawal deadline: Nov 4, 2026.
-Withdrawing would change your enrolled credits from 15 to 12. Likely.
-
+Let me check before you decide.
+```
+```
+You're in CSE 240 this fall (Session C), showing 58% on Canvas.
+Withdrawal deadline: Nov 4. Confirm your section's date in My ASU.
+```
+```
+Withdrawing would take you from 15 to 12 enrolled credits.
+```
+```
 Two dominoes to check:
-1) MAT 266 may require MAT 265. Check with your advisor.
-2) Your award has a 12-credit term minimum and a separate
-   30-earned-credit/3.00 GPA annual renewal. Check with Financial Aid.
-
-Compare 1 Stay / 2 Withdraw / 3 Alternate plan?
+1) CSE 340 and CSE 360 may require CSE 240. A W earns no credit toward it. Check with your advisor.
+2) Your scholarship needs 12 enrolled credits this term, but renewal is separate: 30 earned credits and a 3.00 GPA this year. Check with Financial Aid.
 ```
-Use the script's `deadline_status`: say "Confirmed" only when it is Confirmed; otherwise ask the student to confirm their session in My ASU.
+```
+Compare 1 Stay / 2 Withdraw / 3 Alternate?
+```
+Use the script's `deadline_status`: say "Confirmed" only when it is Confirmed. If the script assumed 3 credits for any class, add its note.
+
+## Final exam (from Canvas assignment groups)
+```
+Your Canvas syllabus says the final is 40% and a C is 70%. With 58% on everything else, you'd need 88% on the final. That's a scenario, not advice to stay.
+```
+
+## Not enrolled
+```
+You aren't enrolled in PHY 121 this term, so there's nothing to withdraw from.
+Your classes: CSE 240, CSE 230, MAT 265, ENG 102, HST 100.
+```
 
 ## Future Fork
 ```

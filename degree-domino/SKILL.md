@@ -55,7 +55,7 @@ credits, or graduation. Drop/withdraw questions use the sections below.
 2. Read current classes from Canvas or the My ASU schedule.
 3. For the course options on unmet requirements, open each in the ASU catalog
    (catalog.apps.asu.edu) and copy its "Enrollment requirements" word for
-   word, as in Gather step 5c. Use `requires` for courses that are all
+   word (Drop / withdraw questions, Gather step 5). Use `requires` for courses that are all
    needed and `requires_any_of` when any one is enough. If the student asks
    about their major map, open it on degrees.asu.edu for their major,
    concentration and catalog year and compare it with DARS.
@@ -76,52 +76,72 @@ credits, or graduation. Drop/withdraw questions use the sections below.
 6. If a current class is a requirement in DARS and the student is worried
    about it, offer a Drop Check.
 
-Gather everything below yourself first, then run the script, then reply once.
-Do not open with a judgment ("maybe", "I wouldn't withdraw") before the
-script has run, and never lean toward staying or withdrawing.
+## Drop / withdraw questions
+Never ask the student for anything Canvas already shows. Send one short
+"Let me check before you decide." and then gather everything below yourself,
+run the script, and reply. Do not open with a judgment ("maybe", "I wouldn't
+withdraw"), and never lean toward staying or withdrawing.
 
-## Gather
-1. Read the student's current-term courses and grades from Canvas yourself.
-   Match what the student named ("cse240", "calc") to those courses. Pass the
-   current course codes as `enrolled_courses` and where you read them as
-   `enrolled_courses_source`. If the named course is not among them, the
-   script returns `enrolled: false`: tell the student they aren't currently
-   enrolled in that class and show the courses they are in. Stop there.
-2. Read the student's major, concentration and catalog year from their DARS
-   degree audit yourself (see "Where student data comes from"). Ask only if
-   DARS cannot be opened, and ask once.
-3. If Canvas is unavailable, say so in one line and continue in manual mode.
-   Ask for just the next missing fact, starting with course credits and total
-   enrolled hours.
-4. Establish school, exact course section/session, and individual withdrawal
-   deadline; check the course's Dates icon in My ASU if necessary. Never apply
-   Session C's deadline to Session B, A or non-standard courses.
-5. Look up course requirements live, every run; never rely on a stored list.
-   a. Use the major, concentration and catalog year from step 2.
-   b. Search the web for the ASU major map for that major and concentration
-      and catalog year on degrees.asu.edu, open it, and list every course
-      code on it. Pass them as `major.courses`, with `major.name`,
-      `major.concentration`, `major.catalog_year` and the page URL as
-      `major.source_url`.
-   c. In the ASU course catalog (catalog.apps.asu.edu), open the dropped
-      course and the courses on the major map that might need it (the
-      student's planned next course first). Copy each course's
-      "Enrollment requirements" text word for word into `requirement_text`
-      and list the course codes it names in `requires`. If the catalog asks
-      for an ASU login, open it in the browser and let the student sign in;
-      never ask for their password.
-   d. Record `fetched_at` as today's date for everything you read. If a page
-      will not load, leave it out; the script then says "Check with your
-      advisor" instead of guessing.
-6. Ask scholarship type only if relevant. Treat semester enrolled hours,
-   annual earned hours, cumulative GPA, and SAP as different calculations.
-7. For final-needed: confirm weighted vs points-based grading, published grade
-   cutoff, remaining items, and all relevant weights. Canvas's displayed current
-   score alone is insufficient to infer an exact final needed.
+### Gather (from Canvas; no questions)
+1. Read the student's current-term Canvas courses. For each, pass an object in
+   `enrolled_courses`: `code`, `credits` (only if Canvas shows them), `start`
+   and `end` dates of the course, and `current_score` for the course the
+   student named. Set `enrolled_courses_source` to "canvas". Match what the
+   student said ("cse240", "calc") to a course yourself; put its code in
+   `target_course.code`. The script works out the session from the dates,
+   the credits before and after (3 per course when Canvas shows none, and it
+   says so), and whether the student is enrolled at all.
+2. If the named course isn't among them, the script returns `enrolled:
+   false`: say they aren't enrolled in it and list their classes. Stop there.
+3. For the final-exam math, read the course's Canvas assignment groups (name,
+   weight, current score, whether all its work is graded) into
+   `final.canvas_groups`, mark the final exam group `is_final`, and read the
+   grade cutoff for the student's target (C if they didn't say) from the
+   syllabus into `final.target_percentage`. Include this even if the student
+   didn't ask, so the reply can mention it when they do.
+4. Use the scholarship from memory if Cubbie knows it (pass `scholarships`);
+   if not, leave it out rather than asking.
+5. Prerequisite dominoes: search the web and the ASU catalog for courses that
+   list the target course as a prerequisite (for CSE 240, for example, search
+   "ASU prerequisite CSE 240"). Pass each as an entry in `prerequisites` with
+   `course`, `requires` (or `requires_any_of`), the requirement text copied
+   word for word, `source_url` and `fetched_at` (today). Unverified ones come
+   back as "may require ... Check with your advisor". If the major is already
+   known (memory or DARS), also pass `major` so only courses in it are kept;
+   never ask for the major.
+6. Pass today's local date as `today`, `school` "ASU" and `term` (for
+   example "fall-2026").
+
+Only if Canvas isn't connected: say so in one line and ask for the single
+next fact (the course, then its credits, then total enrolled credits).
+
+### Reply (same order every time, short separate messages)
+1. "You're in <course> this <term> (Session <X>), showing <score>% on Canvas."
+   then the withdrawal deadline from the script and "Confirm your section's
+   date in My ASU." unless the deadline status is Confirmed.
+2. "Withdrawing would take you from <before> to <after> enrolled credits."
+   plus any credits note the script gives.
+3. "Two dominoes to check:" with the prerequisite headline and the
+   scholarship headline, each ending with its "Check with ..." label.
+4. "Compare 1 Stay / 2 Withdraw / 3 Alternate?"
+On "compare", send the three `future_fork` paths. On "what do I need on the
+final", answer from `final_needed` ("Your Canvas syllabus says the final is
+<w>% and a <grade> is <cutoff>%. With <g>% on everything else, you'd need
+<needed>% on the final. That's a scenario, not advice to stay."). On "draft",
+follow "Act only with consent".
+
+### Other details
+- Establish the exact course section/session; the script infers it from
+  Canvas dates and labels it Likely. Never apply Session C's deadline to
+  Session B, A or non-standard courses.
+- Treat semester enrolled hours, annual earned hours, cumulative GPA, and SAP
+  as different calculations.
+- Canvas's displayed current score alone is not enough for the final-exam
+  math; use the assignment groups.
 
 ## Run
-Write the gathered inputs, including the student's local date as `today`, to a
-JSON file shaped like `assets/sample_drop.json` or `assets/sample_final.json`,
+Write the gathered inputs to a JSON file shaped like `assets/sample_video.json`
+(drop), `assets/sample_final.json` (final) or `assets/sample_plan.json` (plan),
 then run the deterministic script:
 - `python3 scripts/degree_domino.py drop --input <file> --rules rules/asu.json`
 - `python3 scripts/degree_domino.py final --input <file>`
@@ -130,8 +150,7 @@ then run the deterministic script:
 For unsupported schools, omit `--rules` and use generic mode. Interpret only
 claims returned by the script; don't add unsourced policy verdicts.
 `rules/asu.json` holds only university-wide policies (deadlines, W grade,
-scholarship, aid). The script keeps only prerequisites for courses on the
-student's major map and reports them in `dominoes_in_major`.
+scholarship, aid).
 
 Exit codes: 0 summarize the result; 2 ask for the named missing field (one
 question); 3 rules unavailable, give generic arithmetic and say so; 4 give no
@@ -157,7 +176,8 @@ check-in only after yes, and confirm the course's own deadline and the user's
 chosen check-in time and time zone.
 
 ## Missing data or errors
-If Canvas is missing, take manual input. If date, award, grade weights or rules
-are uncertain, say what is known and ask one specific follow-up or recommend
-confirmation through the appropriate office. Do not claim that the student's
+If Canvas is missing, take manual input. If the session, award, grade weights
+or rules are still uncertain after reading Canvas, say what is known and point
+to the office that can confirm it; ask the student only for something Canvas
+doesn't show, and only one thing at a time. Do not claim that the student's
 graduation or funding is guaranteed or lost. Never relay raw JSON.

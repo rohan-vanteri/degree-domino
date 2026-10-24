@@ -132,6 +132,48 @@ def usable_rule(pack, rule_id, today):
 
 # -------------------------------------------------------------- final needed
 
+def from_canvas_groups(final):
+    """Turn Canvas assignment groups into the weighted inputs compute_final uses.
+
+    `canvas_groups`: [{"name", "weight", "score", "complete", "is_final"}]
+    where weight and score are percents. The final is the group marked
+    is_final (or named "final"). Completed groups give the average on graded
+    work; incomplete non-final groups become remaining_nonfinal_weight.
+    """
+    groups = final.get("canvas_groups")
+    if not groups:
+        return final
+    final = dict(final)
+    final.setdefault("grading_method", "weighted")
+    total = sum(to_decimal(g.get("weight", 0), "canvas_groups.weight", 0) for g in groups)
+    if total <= 0:
+        raise InputError("canvas_groups", "Assignment group weights must add up to more than 0")
+    fin = [g for g in groups if g.get("is_final")] or \
+        [g for g in groups if "final" in str(g.get("name", "")).lower()]
+    if len(fin) != 1:
+        final["final_weight"] = None
+        return final
+    w = to_decimal(fin[0]["weight"], "canvas_groups.weight", 0) / total
+    done_w = Decimal(0)
+    done_pts = Decimal(0)
+    remaining = Decimal(0)
+    for g in groups:
+        if g is fin[0]:
+            continue
+        gw = to_decimal(g.get("weight", 0), "canvas_groups.weight", 0) / total
+        if g.get("complete") and g.get("score") is not None:
+            done_w += gw
+            done_pts += gw * to_decimal(g["score"], "canvas_groups.score", 0)
+        else:
+            remaining += gw
+    final["final_weight"] = num(w)
+    final["nonfinal_aggregate"] = num(done_pts / done_w) if done_w else None
+    final["all_other_work_finalized"] = remaining == 0
+    final["remaining_nonfinal_weight"] = num(remaining)
+    final["source"] = "canvas_assignment_groups"
+    return final
+
+
 def compute_final(final, school_rules_used=False):
     """Conditional final-needed math (plan section 8.2).
 
@@ -141,6 +183,7 @@ def compute_final(final, school_rules_used=False):
     if not isinstance(final, dict):
         return {"needed": None, "missing": "final",
                 "reason": "No grading information supplied."}
+    final = from_canvas_groups(final)
 
     method = final.get("grading_method")
     target = final.get("target_percentage")
@@ -267,7 +310,75 @@ def _finish_needed(result, needed):
 
 # ---------------------------------------------------------------------- drop
 
+def _course_code(c):
+    return norm_course(c.get("code") if isinstance(c, dict) else c)
+
+
+def infer_session(start, end):
+    """Guess an ASU A/B/C session from a Canvas course's start and end dates.
+
+    Full-semester courses (roughly 12+ weeks) are Session C; 7.5-week courses
+    starting in the first half of the term are A, later ones B. The result is
+    labeled as inferred so it is never reported as Confirmed.
+    """
+    try:
+        s, e = date.fromisoformat(str(start)[:10]), date.fromisoformat(str(end)[:10])
+    except ValueError:
+        return None
+    length = (e - s).days
+    if length >= 84:
+        return "C"
+    if length <= 63:
+        return "A" if s.month in (1, 8) or (s.month in (2, 9) and s.day < 20) else "B"
+    return None
+
+
+def apply_canvas(data):
+    """Fill drop-check inputs from the student's Canvas courses so Cubbie never
+    has to ask: target credits and session, other enrolled credits, current
+    score. Each course in `enrolled_courses` may be a code or an object
+    {"code", "credits", "start", "end", "current_score"}. Missing credits are
+    assumed to be 3 and flagged as an assumption.
+    """
+    enrolled = data.get("enrolled_courses")
+    if not isinstance(enrolled, list) or not any(isinstance(c, dict) for c in enrolled):
+        return data
+    data = json.loads(json.dumps(data))
+    course = data.setdefault("target_course", {})
+    target = norm_course(course.get("code", ""))
+    assumed = []
+    other = Decimal(0)
+    for c in data["enrolled_courses"]:
+        entry = c if isinstance(c, dict) else {"code": c}
+        code = norm_course(entry.get("code", ""))
+        if entry.get("credits") is not None:
+            cr = to_decimal(entry["credits"], "enrolled_courses.credits", 0)
+        else:
+            cr = DEFAULT_COURSE_CREDITS
+            assumed.append(code)
+        if code == target:
+            course.setdefault("credits", num(cr))
+            if entry.get("credits") is None:
+                course.setdefault("credits_provenance", "assumed_3")
+            if course.get("session") is None and entry.get("start") and entry.get("end"):
+                guess = infer_session(entry["start"], entry["end"])
+                if guess:
+                    course["session"] = guess
+                    course["session_provenance"] = "canvas_dates"
+            if entry.get("current_score") is not None:
+                course.setdefault("canvas_displayed_score", entry["current_score"])
+        else:
+            other += cr
+    if data.get("other_enrolled_credits") is None:
+        data["other_enrolled_credits"] = num(other)
+        data.setdefault("other_credits_provenance", "canvas_course_list")
+    if assumed:
+        data["credits_assumed_for"] = assumed
+    return data
+
+
 def compute_drop(data, pack):
+    data = apply_canvas(data)
     today = parse_date(require(data, "today"), "today")
     course = require(data, "target_course")
     code = require(course, "code", "target_course")
@@ -275,7 +386,7 @@ def compute_drop(data, pack):
     # courses (read from Canvas or My ASU), a class they aren't in stops here.
     enrolled = data.get("enrolled_courses")
     if isinstance(enrolled, list):
-        current = [norm_course(c) for c in enrolled]
+        current = [_course_code(c) for c in enrolled]
         if norm_course(code) not in current:
             return {"ok": True, "enrolled": False, "course": norm_course(code),
                     "today": today.isoformat(), "current_courses": current,
@@ -300,8 +411,16 @@ def compute_drop(data, pack):
     credits_verified = (course.get("credits_provenance") in VERIFIED_PROVENANCE
                         and data.get("other_credits_provenance") in VERIFIED_PROVENANCE)
     credit_status = CONFIRMED if credits_verified else LIKELY
+    if credits_verified:
+        note = ""
+    elif data.get("credits_assumed_for"):
+        note = " (assuming 3 credits for %s; check My ASU)" % ", ".join(data["credits_assumed_for"])
+    elif data.get("other_credits_provenance") == "canvas_course_list":
+        note = " (from your Canvas course list)"
+    else:
+        note = " (student-reported)"
     credit_text = "Enrolled credits: %s to %s if you withdraw from %s%s." % (
-        num(before), num(after), code, "" if credits_verified else " (student-reported)")
+        num(before), num(after), code, note)
 
     out = {
         "ok": True,
@@ -312,6 +431,10 @@ def compute_drop(data, pack):
         "enrolled_credits_before": num(before),
         "enrolled_credits_after": num(after),
         "enrolled_credits_status": credit_status,
+        "credits_assumed_for": data.get("credits_assumed_for"),
+        "session": course.get("session"),
+        "session_inferred": True if course.get("session_provenance") == "canvas_dates" else None,
+        "canvas_score": course.get("canvas_displayed_score"),
     }
 
     # Deadline: chosen by session and course type, never by semester name.
@@ -388,6 +511,9 @@ def compute_drop(data, pack):
     else:
         out["final_needed"] = None
 
+    for key in ("credits_assumed_for", "session_inferred", "canvas_score"):
+        if out.get(key) is None:
+            out.pop(key, None)
     out["source_ids"] = sources
     out["sources"] = {sid: pack["rules"][sid]["source_url"] for sid in sources} if pack else {}
     out["sources"].update(live["sources"])
@@ -483,7 +609,8 @@ def _live_prereqs(data, code, today):
         if lead["status"] == CONFIRMED and lead["requirement_text"]:
             text += ' Catalog: "%s"' % str(lead["requirement_text"])[:160]
         if others:
-            text += " Also in your major: %s." % ", ".join(others[:4])
+            label = "Also in your major" if major_courses is not None else "Also"
+            text += " %s: %s." % (label, ", ".join(others[:4]))
         result["headline"] = {"text": text, "status": lead["status"]}
     elif planned:
         result["headline"] = {"text": "%s may depend on %s; I couldn't confirm it in the ASU catalog."
