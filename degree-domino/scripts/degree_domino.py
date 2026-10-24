@@ -269,6 +269,18 @@ def compute_drop(data, pack):
     today = parse_date(require(data, "today"), "today")
     course = require(data, "target_course")
     code = require(course, "code", "target_course")
+    # Enrollment check before anything else: with the student's current
+    # courses (read from Canvas or My ASU), a class they aren't in stops here.
+    enrolled = data.get("enrolled_courses")
+    if isinstance(enrolled, list):
+        current = [norm_course(c) for c in enrolled]
+        if norm_course(code) not in current:
+            return {"ok": True, "enrolled": False, "course": norm_course(code),
+                    "today": today.isoformat(), "current_courses": current,
+                    "message": "You aren't currently enrolled in %s, so there is nothing to "
+                               "withdraw from." % norm_course(code),
+                    "enrollment_source": data.get("enrolled_courses_source")}
+
     credits = to_decimal(require(course, "credits", "target_course"), "target_course.credits", 0)
     other = to_decimal(require(data, "other_enrolled_credits"), "other_enrolled_credits", 0)
 
@@ -291,6 +303,7 @@ def compute_drop(data, pack):
 
     out = {
         "ok": True,
+        "enrolled": True if isinstance(enrolled, list) else None,
         "mode": "asu" if asu else "generic",
         "course": code,
         "today": today.isoformat(),
@@ -425,7 +438,8 @@ def _live_prereqs(data, code, today):
     if isinstance(major, dict) and major.get("courses"):
         major_ok = _official_url(major.get("source_url")) and _fresh(major.get("fetched_at"), today)
         major_courses = {norm_course(c) for c in major["courses"]}
-        result["major"] = {"name": major.get("name"), "catalog_year": major.get("catalog_year"),
+        result["major"] = {"name": major.get("name"), "concentration": major.get("concentration"),
+                           "catalog_year": major.get("catalog_year"),
                            "course_count": len(major_courses), "verified": major_ok}
         if major_ok:
             result["sources"]["major_map"] = major["source_url"]

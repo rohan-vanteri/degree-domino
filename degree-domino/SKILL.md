@@ -9,20 +9,35 @@ Help students understand the consequences of academic decisions; never make
 an enrollment decision for them. Separate official rules from student-specific
 impacts, and state uncertainty rather than guessing.
 
+Gather everything below yourself first, then run the script, then reply once.
+Do not open with a judgment ("maybe", "I wouldn't withdraw") before the
+script has run, and never lean toward staying or withdrawing.
+
 ## Gather
-1. Reuse already authorized Canvas, memory and student course context where
-   current; ask once for any new permission needed.
-2. If Canvas is unavailable, continue in manual mode. Ask for just the next
-   missing fact, starting with course credits and total enrolled hours.
-3. Establish school, exact course section/session, and individual withdrawal
+1. Read the student's current-term courses and grades from Canvas yourself.
+   Match what the student named ("cse240", "calc") to those courses. Pass the
+   current course codes as `enrolled_courses` and where you read them as
+   `enrolled_courses_source`. If the named course is not among them, the
+   script returns `enrolled: false`: tell the student they aren't currently
+   enrolled in that class and show the courses they are in. Stop there.
+2. Find the student's major, concentration and catalog year yourself, in
+   this order: memory; the student's My ASU profile or DARS degree audit,
+   opened in the browser (the student signs in; never ask for a password);
+   then their Canvas profile. Ask only if none of these shows it, and ask
+   once. With consent, remember it so it is never asked again.
+3. If Canvas is unavailable, say so in one line and continue in manual mode.
+   Ask for just the next missing fact, starting with course credits and total
+   enrolled hours.
+4. Establish school, exact course section/session, and individual withdrawal
    deadline; check the course's Dates icon in My ASU if necessary. Never apply
    Session C's deadline to Session B, A or non-standard courses.
-4. Look up course requirements live, every run; never rely on a stored list.
-   a. Get the student's major and catalog year (from memory, or ask once and
-      remember it with consent).
-   b. Search the web for that major's ASU major map on degrees.asu.edu, open
-      it, and list every course code on it. Pass them as `major.courses` with
-      the page URL as `major.source_url`.
+5. Look up course requirements live, every run; never rely on a stored list.
+   a. Use the major, concentration and catalog year from step 2.
+   b. Search the web for the ASU major map for that major and concentration
+      and catalog year on degrees.asu.edu, open it, and list every course
+      code on it. Pass them as `major.courses`, with `major.name`,
+      `major.concentration`, `major.catalog_year` and the page URL as
+      `major.source_url`.
    c. In the ASU course catalog (catalog.apps.asu.edu), open the dropped
       course and the courses on the major map that might need it (the
       student's planned next course first). Copy each course's
@@ -33,9 +48,9 @@ impacts, and state uncertainty rather than guessing.
    d. Record `fetched_at` as today's date for everything you read. If a page
       will not load, leave it out; the script then says "Check with your
       advisor" instead of guessing.
-5. Ask scholarship type only if relevant. Treat semester enrolled hours,
+6. Ask scholarship type only if relevant. Treat semester enrolled hours,
    annual earned hours, cumulative GPA, and SAP as different calculations.
-6. For final-needed: confirm weighted vs points-based grading, published grade
+7. For final-needed: confirm weighted vs points-based grading, published grade
    cutoff, remaining items, and all relevant weights. Canvas's displayed current
    score alone is insufficient to infer an exact final needed.
 
