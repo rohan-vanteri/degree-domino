@@ -14,6 +14,7 @@ https://github.com/rohan-vanteri/degree-domino/tree/main/degree-domino
 - University-wide policies (deadlines, W grade, scholarship, aid) come from `degree-domino/rules/asu.json`, with a source URL and check date. Unverified or stale rules are reported as "Check with [office]".
 - Course prerequisites are never hard-coded. Each run, Cubbie reads the student's major map and the ASU catalog live, and the script keeps only courses in that major. A prerequisite is Confirmed only if it came from an official ASU page fetched in the last 7 days and the quoted requirement names the dropped course.
 - The final-exam calculation only gives a number when the grading method, cutoff and weights are known. A Canvas total alone is not enough.
+- Named-course grade and withdrawal questions first check live Canvas current and past student enrollments. The `enrollment` command distinguishes current, previous (with term), not current, and unverified enrollment; Cubbie supplies the live Canvas data.
 - Works without Canvas: the student can type in course credits and grades.
 - All data in this repository is synthetic.
 

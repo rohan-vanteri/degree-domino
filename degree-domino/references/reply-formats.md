@@ -30,9 +30,16 @@ Your Canvas syllabus says the final is 40% and a C is 70%. With 58% on everythin
 
 ## Not enrolled
 ```
-You aren't enrolled in PHY 121 this term, so there's nothing to withdraw from.
+You are not currently enrolled in PHY 121.
 Your classes: CSE 240, CSE 230, MAT 265, ENG 102, HST 100.
 ```
+
+## Previously enrolled (from Canvas)
+```
+You are not currently enrolled in CSE 360. Canvas shows you were enrolled in Spring 2026.
+```
+Use the actual Canvas term. Run the live enrollment check before replying to
+grade/performance questions too; do not request a grade screenshot for an absent course.
 
 ## Future Fork
 ```

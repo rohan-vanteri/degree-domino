@@ -4,6 +4,7 @@
 Subcommands:
   drop   withdrawal preflight (deadline, enrolled credits, aid/scholarship and
          prerequisite tripwires, Stay / Withdraw / Alternate Future Fork)
+  enrollment  exact course lookup from live Canvas enrollment data
   final  conditional final-exam-needed calculation
   plan   degree progress and next-term suggestions from the DARS audit
 
@@ -314,6 +315,45 @@ def _course_code(c):
     return norm_course(c.get("code") if isinstance(c, dict) else c)
 
 
+def compute_enrollment(data):
+    """Resolve an exact course from a fresh Canvas current/past roster.
+
+    Cubbie reads Canvas; this offline engine never treats a partial sync as
+    proof of absence. Current and previous rosters must contain student
+    enrollments, not merely courses the user can view.
+    """
+    code = norm_course(require(require(data, "target_course"), "code"))
+    today = parse_date(require(data, "today"), "today")
+    snapshot = require(data, "canvas")
+    current = require(snapshot, "current_courses")
+    previous = require(snapshot, "previous_courses")
+    for key, rows in (("current_courses", current), ("previous_courses", previous)):
+        if not isinstance(rows, list) or any(not isinstance(c, dict) or not c.get("code") for c in rows):
+            raise InputError("canvas." + key, "Canvas courses must be objects with an exact code")
+    out = {"ok": True, "course": code, "enrolled": None,
+           "enrollment_source": "canvas", "status": "unknown"}
+    fresh = snapshot.get("checked_on") == today.isoformat()
+    if not fresh:
+        out["message"] = "I need to refresh your Canvas enrollment information before I can confirm whether you are currently enrolled in %s." % code
+        return out
+    matches = [c for c in current if _course_code(c) == code]
+    if matches:
+        out.update(status="current", enrolled=True, courses=matches,
+                   message="You are currently enrolled in %s." % code)
+        return out
+    if snapshot.get("current_complete") is not True:
+        out["message"] = "I could not finish checking your current Canvas enrollments, so I cannot confirm whether you are currently enrolled in %s." % code
+        return out
+    past = [c for c in previous if _course_code(c) == code]
+    message = "You are not currently enrolled in %s." % code
+    if past:
+        terms = list(dict.fromkeys(str(c["term"]) for c in past if c.get("term")))
+        message += " Canvas shows you were enrolled " + ("in " + ", ".join(terms) if terms else "in a previous semester") + "."
+    out.update(status="previous" if past else "not_current", enrolled=False,
+               previous_courses=past, message=message)
+    return out
+
+
 def infer_session(start, end):
     """Guess an ASU A/B/C session from a Canvas course's start and end dates.
 
@@ -378,6 +418,12 @@ def apply_canvas(data):
 
 
 def compute_drop(data, pack):
+    if "canvas" in data:
+        enrollment = compute_enrollment(data)
+        if enrollment["enrolled"] is not True:
+            return enrollment
+        data = dict(data, enrolled_courses=data["canvas"]["current_courses"],
+                    enrolled_courses_source="canvas")
     data = apply_canvas(data)
     today = parse_date(require(data, "today"), "today")
     course = require(data, "target_course")
@@ -845,7 +891,7 @@ def emit(obj):
 
 
 def read_input(args):
-    path = SAMPLES[args.command] if args.sample else args.input
+    path = SAMPLES.get(args.command) if args.sample else args.input
     if not path:
         raise InputError("input", "Pass --input <file> or --sample")
     try:
@@ -858,7 +904,7 @@ def read_input(args):
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Degree Domino engine")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("drop", "final", "plan"):
+    for name in ("drop", "final", "plan", "enrollment"):
         p = sub.add_parser(name)
         p.add_argument("--input")
         p.add_argument("--sample", action="store_true")
@@ -868,7 +914,9 @@ def main(argv=None):
 
     try:
         data = read_input(args)
-        if args.command == "drop":
+        if args.command == "enrollment":
+            emit(compute_enrollment(data))
+        elif args.command == "drop":
             try:
                 pack = load_rules(args.rules)
             except RulesError as e:
