@@ -35,8 +35,8 @@ Your classes: CSE 240, CSE 230, MAT 265, ENG 102, HST 100.
 ```
 
 For a course absent from an incomplete Canvas roster, use the same short
-"I do not see you currently enrolled for <code>." response. Do not append a
-sync disclaimer or ask for its Canvas link or Grades screenshot.
+"I do not see you currently enrolled for <code>. The Canvas sync is incomplete."
+response. Do not ask for its Canvas link or Grades screenshot.
 
 ## Previously enrolled (from Canvas)
 ```

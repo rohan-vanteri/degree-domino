@@ -68,7 +68,7 @@ class CanvasLookup(unittest.TestCase):
     def test_incomplete_is_unknown_even_with_history(self):
         out = dd.compute_enrollment(self.data(previous=[{"code": "CSE 360"}], complete=False))
         self.assertIsNone(out["enrolled"])
-        self.assertEqual(out["message"], "I do not see you currently enrolled for CSE360.")
+        self.assertEqual(out["message"], "I do not see you currently enrolled for CSE360. The Canvas sync is incomplete.")
 
     def test_stale_snapshot_is_unknown(self):
         data = self.data(current=[{"code": "CSE 360"}])

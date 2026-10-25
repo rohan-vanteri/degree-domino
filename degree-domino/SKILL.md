@@ -57,9 +57,9 @@ Run `python3 scripts/degree_domino.py enrollment --input <file>`.
   you were enrolled in Spring 2026." Use the actual term if available;
   otherwise say "in a previous semester". Do not imply a passing grade.
 - `unknown`: if the course is absent from an incomplete Canvas roster, say
-  exactly "I do not see you currently enrolled for CSE360." Use the requested
+  "I do not see you currently enrolled for CSE360. The Canvas sync is incomplete." Use the requested
   course code without spaces. This describes what is visible, not a definitive
-  enrollment verdict. Do not add an incomplete-sync explanation or ask for a
+  enrollment verdict. Include the incomplete-sync note, but do not ask for a
   course link or Grades screenshot. If the data is stale, refresh Canvas first.
 
 For any absent course, including `unknown` from an incomplete roster, stop
@@ -144,7 +144,8 @@ withdraw"), and never lean toward staying or withdrawing.
    says so), and whether the student is enrolled at all.
 2. If the enrollment check returns `previous` or `not_current`, use its
    message and stop. For an absent course in an incomplete roster, use the
-   same "I do not see you currently enrolled for <code>." wording and stop.
+   same "I do not see you currently enrolled for <code>. The Canvas sync is
+   incomplete." wording and stop.
 3. For the final-exam math, read the course's Canvas assignment groups (name,
    weight, current score, whether all its work is graded) into
    `final.canvas_groups`, mark the final exam group `is_final`, and read the
