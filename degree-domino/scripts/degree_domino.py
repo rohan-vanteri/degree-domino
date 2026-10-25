@@ -342,10 +342,10 @@ def compute_enrollment(data):
                    message="You are currently enrolled in %s." % code)
         return out
     if snapshot.get("current_complete") is not True:
-        out["message"] = "I could not finish checking your current Canvas enrollments, so I cannot confirm whether you are currently enrolled in %s." % code
+        out["message"] = "I do not see you currently enrolled for %s." % code.replace(" ", "")
         return out
     past = [c for c in previous if _course_code(c) == code]
-    message = "You are not currently enrolled in %s." % code
+    message = "I do not see you currently enrolled for %s." % code.replace(" ", "")
     if past:
         terms = list(dict.fromkeys(str(c["term"]) for c in past if c.get("term")))
         message += " Canvas shows you were enrolled " + ("in " + ", ".join(terms) if terms else "in a previous semester") + "."

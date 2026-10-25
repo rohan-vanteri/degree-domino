@@ -30,13 +30,17 @@ Your Canvas syllabus says the final is 40% and a C is 70%. With 58% on everythin
 
 ## Not enrolled
 ```
-You are not currently enrolled in PHY 121.
+I do not see you currently enrolled for PHY121.
 Your classes: CSE 240, CSE 230, MAT 265, ENG 102, HST 100.
 ```
 
+For a course absent from an incomplete Canvas roster, use the same short
+"I do not see you currently enrolled for <code>." response. Do not append a
+sync disclaimer or ask for its Canvas link or Grades screenshot.
+
 ## Previously enrolled (from Canvas)
 ```
-You are not currently enrolled in CSE 360. Canvas shows you were enrolled in Spring 2026.
+I do not see you currently enrolled for CSE360. Canvas shows you were enrolled in Spring 2026.
 ```
 Use the actual Canvas term. Run the live enrollment check before replying to
 grade/performance questions too; do not request a grade screenshot for an absent course.
