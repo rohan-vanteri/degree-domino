@@ -52,14 +52,18 @@ roster has been fully read. Set it false on access errors or incomplete paging.
 Run `python3 scripts/degree_domino.py enrollment --input <file>`.
 - `current`: read grades, assignment groups and syllabus from that Canvas
   course/section; continue with the student's question.
-- `not_current`: say "You are not currently enrolled in CSE 360."
-- `previous`: say "You are not currently enrolled in CSE 360. Canvas shows
+- `not_current`: say "I do not see you currently enrolled for CSE360."
+- `previous`: say "I do not see you currently enrolled for CSE360. Canvas shows
   you were enrolled in Spring 2026." Use the actual term if available;
   otherwise say "in a previous semester". Do not imply a passing grade.
-- `unknown`: refresh/retry Canvas and explain the access limitation if it
-  persists. Do not turn an incomplete sync into a non-enrollment claim.
+- `unknown`: if the course is absent from an incomplete Canvas roster, say
+  "I do not see you currently enrolled for CSE360. The Canvas sync is incomplete." Use the requested
+  course code without spaces. This describes what is visible, not a definitive
+  enrollment verdict. Include the incomplete-sync note, but do not ask for a
+  course link or Grades screenshot. If the data is stale, refresh Canvas first.
 
-For `not_current` or `previous`, stop current-grade/withdrawal analysis. Do not
+For any absent course, including `unknown` from an incomplete roster, stop
+current-grade/withdrawal analysis. Do not
 ask for screenshots or a course link to compensate for not checking Canvas.
 On "CSE360" or "are you sure?", repeat the live lookup instead of repeating
 cached results. Historical grades may be read from the past Canvas course if
@@ -139,7 +143,9 @@ withdraw"), and never lean toward staying or withdrawing.
    the credits before and after (3 per course when Canvas shows none, and it
    says so), and whether the student is enrolled at all.
 2. If the enrollment check returns `previous` or `not_current`, use its
-   message and stop. If it returns `unknown`, finish checking Canvas first.
+   message and stop. For an absent course in an incomplete roster, use the
+   same "I do not see you currently enrolled for <code>. The Canvas sync is
+   incomplete." wording and stop.
 3. For the final-exam math, read the course's Canvas assignment groups (name,
    weight, current score, whether all its work is graded) into
    `final.canvas_groups`, mark the final exam group `is_final`, and read the
