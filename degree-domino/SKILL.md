@@ -1,6 +1,6 @@
 ---
 name: degree-domino
-description: Answers ASU degree, major map, class registration, graduation and drop/withdraw questions from the student's DARS audit and current classes, with sourced suggestions. Use when a student asks "what should I take next semester", "what classes do I need", "help me register", "show my major map", "what is left in my degree", "when will I graduate", "what is my expected graduation", "am I on track", "how many credits do I have left", "should I drop", "what if I withdraw", "will this affect my scholarship", or "what do I need on the final". Not a generic study plan.
+description: Answers ASU degree, major map, class registration, graduation and drop/withdraw questions from the student's DARS audit and current classes, with sourced suggestions. Use when a student asks "what should I take next semester", "what classes do I need", "help me register", "show my major map", "what is left in my degree", "when will I graduate", "what is my expected graduation", "am I on track", "how many credits do I have left", "should I drop", "what if I withdraw", "will this affect my scholarship", or "what do I need on the final". Also use for course enrollment and grade questions such as "how am I doing in CSE360". Not a generic study plan.
 ---
 
 # Degree Domino
@@ -17,6 +17,53 @@ Use only these sources for the student's own academic record:
   remaining, requirements left, and expected graduation term: the student's
   DARS degree audit, opened in the browser from My ASU (see "Signing in to
   My ASU").
+
+## Check enrollment before any named-course question
+For grades, finals, course performance, or withdrawal, first read the student's
+Canvas course information live. A cached sync, dashboard favorites, or a course
+search result is not a complete enrollment list. Open Canvas Courses > All
+Courses and inspect current and past student enrollments, course code, title,
+section, term and enrollment state. If using a Canvas connector/API, retrieve
+all pages and include concluded enrollments and term information. Do not infer
+past enrollment from an old start date or mere access to a course. Use the
+actual student enrollment and term; an earlier session in the current semester
+is not a previous semester. A current retake takes priority over a past attempt.
+
+Match exact course codes with spacing/case normalized (CSE360 = CSE 360).
+Do not substitute CSE 301 for CSE 360. If a nickname or multiple sections are
+ambiguous, ask for clarification using the Canvas titles/terms you found.
+
+Write the observed data as:
+```json
+{
+  "today": "2026-10-24",
+  "target_course": {"code": "CSE360"},
+  "canvas": {
+    "checked_on": "2026-10-24",
+    "current_complete": true,
+    "current_courses": [{"code": "CSE 301", "name": "Computing Ethics", "term": "Fall 2026"}],
+    "previous_courses": [{"code": "CSE 360", "name": "Introduction to Software Engineering", "term": "Spring 2026"}]
+  }
+}
+```
+Use the student's local date, actual Canvas titles/terms and only verified
+student enrollments. `current_complete` is true only after the live current
+roster has been fully read. Set it false on access errors or incomplete paging.
+Run `python3 scripts/degree_domino.py enrollment --input <file>`.
+- `current`: read grades, assignment groups and syllabus from that Canvas
+  course/section; continue with the student's question.
+- `not_current`: say "You are not currently enrolled in CSE 360."
+- `previous`: say "You are not currently enrolled in CSE 360. Canvas shows
+  you were enrolled in Spring 2026." Use the actual term if available;
+  otherwise say "in a previous semester". Do not imply a passing grade.
+- `unknown`: refresh/retry Canvas and explain the access limitation if it
+  persists. Do not turn an incomplete sync into a non-enrollment claim.
+
+For `not_current` or `previous`, stop current-grade/withdrawal analysis. Do not
+ask for screenshots or a course link to compensate for not checking Canvas.
+On "CSE360" or "are you sure?", repeat the live lookup instead of repeating
+cached results. Historical grades may be read from the past Canvas course if
+the student asks, clearly labeled with its term. Never invent course details.
 
 ## Signing in to My ASU
 Whenever you need My ASU or DARS:
@@ -83,7 +130,7 @@ run the script, and reply. Do not open with a judgment ("maybe", "I wouldn't
 withdraw"), and never lean toward staying or withdrawing.
 
 ### Gather (from Canvas; no questions)
-1. Read the student's current-term Canvas courses. For each, pass an object in
+1. Run the enrollment check above and include its `canvas` object in the drop input. Read the student's current-term Canvas courses. For each, pass an object in
    `enrolled_courses`: `code`, `credits` (only if Canvas shows them), `start`
    and `end` dates of the course, and `current_score` for the course the
    student named. Set `enrolled_courses_source` to "canvas". Match what the
@@ -91,8 +138,8 @@ withdraw"), and never lean toward staying or withdrawing.
    `target_course.code`. The script works out the session from the dates,
    the credits before and after (3 per course when Canvas shows none, and it
    says so), and whether the student is enrolled at all.
-2. If the named course isn't among them, the script returns `enrolled:
-   false`: say they aren't enrolled in it and list their classes. Stop there.
+2. If the enrollment check returns `previous` or `not_current`, use its
+   message and stop. If it returns `unknown`, finish checking Canvas first.
 3. For the final-exam math, read the course's Canvas assignment groups (name,
    weight, current score, whether all its work is graded) into
    `final.canvas_groups`, mark the final exam group `is_final`, and read the
